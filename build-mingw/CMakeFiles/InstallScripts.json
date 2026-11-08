@@ -1,0 +1,9 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/aspxcachyos/Desktop/pathetical/build-mingw/cmake_install.cmake",
+		"/home/aspxcachyos/Desktop/pathetical/build-mingw/libraries/minhook/cmake_install.cmake",
+		"/home/aspxcachyos/Desktop/pathetical/build-mingw/libraries/cocos-headers/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

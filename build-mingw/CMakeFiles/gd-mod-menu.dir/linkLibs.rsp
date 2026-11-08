@@ -1,0 +1,1 @@
+ libraries/minhook/minhook.x32.a -static-libgcc -static-libstdc++ "/home/aspxcachyos/Desktop/pathetical/libraries/cocos-headers/cocos2dx/libcocos2d.lib" "/home/aspxcachyos/Desktop/pathetical/libraries/cocos-headers/extensions/libExtensions.lib" -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 

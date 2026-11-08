@@ -1,0 +1,21 @@
+# Build outputs
+build/
+*.dll
+*.lib
+*.exp
+*.obj
+*.pdb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local config
+*.local.json
+settings.local.json
