@@ -2,30 +2,55 @@ cmake_minimum_required(VERSION 3.5...3.30)
 
 project(cocos-headers CXX)
 
-# Generate import libraries from DLLs using lib.exe (MSVC) or dlltool (MinGW)
-# This allows linking against GD's libcocos2d.dll and libExtensions.dll
+# Generate import libraries from DLLs
+# For MSVC: dumpbin -> .def -> lib.exe
+# For MinGW: dlltool directly from DLL
 
 function(generate_import_lib output_lib input_dll)
+    get_filename_component(dll_name ${input_dll} NAME_WE)
+    set(def_file ${CMAKE_CURRENT_BINARY_DIR}/${dll_name}.def)
+
     if(MSVC)
-        # Use lib.exe from Visual Studio
+        # Step 1: Find dumpbin and lib.exe
+        find_program(DUMPBIN_EXE dumpbin.exe
+            PATHS "$ENV{VCToolsInstallDir}/bin/Hostx86/x86"
+            "$ENV{VCToolsInstallDir}/bin/HostX64/x86"
+            NO_DEFAULT_PATH
+        )
         find_program(LIB_EXE lib.exe
             PATHS "$ENV{VCToolsInstallDir}/bin/Hostx86/x86"
             "$ENV{VCToolsInstallDir}/bin/HostX64/x86"
-            "$ENV{WindowsSdkDir}/bin"
             NO_DEFAULT_PATH
         )
-        if(LIB_EXE)
+
+        if(DUMPBIN_EXE AND LIB_EXE)
+            # Step 2: Generate .def file from DLL exports
+            add_custom_command(
+                OUTPUT ${def_file}
+                COMMAND ${DUMPBIN_EXE} /EXPORTS ${input_dll}
+                    | findstr /R /C:"^[[:space:]]*[0-9A-F]*[[:space:]]*[0-9A-F]*[[:space:]]*[0-9A-F]*[[:space:]]*[A-Za-z_?@]"
+                COMMAND echo "LIBRARY ${dll_name}" > ${def_file}
+                COMMAND echo "EXPORTS" >> ${def_file}
+                COMMAND ${DUMPBIN_EXE} /EXPORTS ${input_dll}
+                    | findstr /R /C:"^[[:space:]]*[0-9A-F]*[[:space:]]*[0-9A-F]*[[:space:]]*[0-9A-F]*[[:space:]]*[A-Za-z_?@]"
+                    | awk "{print \\$4}" >> ${def_file}
+                DEPENDS ${input_dll}
+                COMMENT "Generating .def file for ${input_dll}"
+            )
+
+            # Step 3: Generate import library from .def
             add_custom_command(
                 OUTPUT ${output_lib}
-                COMMAND ${LIB_EXE} /MACHINE:X86 /DEF:${input_dll} /OUT:${output_lib}
-                DEPENDS ${input_dll}
-                COMMENT "Generating import library ${output_lib} from ${input_dll}"
+                COMMAND ${LIB_EXE} /MACHINE:X86 /DEF:${def_file} /OUT:${output_lib}
+                DEPENDS ${def_file}
+                COMMENT "Generating import library ${output_lib} from ${def_file}"
             )
         else()
-            message(WARNING "lib.exe not found, cannot generate import library for ${input_dll}")
+            message(WARNING "dumpbin.exe or lib.exe not found, cannot generate import library for ${input_dll}")
         endif()
+
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR MINGW)
-        # Use dlltool from MinGW
+        # Use dlltool from MinGW - can generate directly from DLL
         find_program(DLLTOOL dlltool)
         if(DLLTOOL)
             add_custom_command(
