@@ -2,6 +2,8 @@
 #include "ModManager.hpp"
 #include "Offsets.hpp"
 
+using namespace offsets;
+
 namespace modmenu {
 
     HookManager* HookManager::s_instance = nullptr;
