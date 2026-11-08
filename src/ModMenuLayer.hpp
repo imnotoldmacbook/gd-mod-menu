@@ -2,6 +2,7 @@
 
 #include "includes.h"
 #include "ModManager.hpp"
+// FLAlertLayer is included via gd.h
 
 namespace modmenu {
 
@@ -23,11 +24,11 @@ namespace modmenu {
         int m_currentTab = TAB_MAIN;
 
         // Menu items for tabs
-        CCMenuItemSpriteExtra* m_pTabButtons[5];
+        gd::CCMenuItemSpriteExtra* m_pTabButtons[5];
 
         // Toggle buttons
         struct ToggleItem {
-            CCMenuItemToggler* toggler;
+            gd::CCMenuItemToggler* toggler;
             const char* settingKey;
             const char* label;
         };

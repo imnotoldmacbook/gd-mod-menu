@@ -9,8 +9,6 @@ namespace modmenu {
     void HookManager::enableHooks() {
         if (m_hooksEnabled) return;
 
-        auto base = reinterpret_cast<uintptr_t>(GetModuleHandle(0));
-
         // All hooks are enabled in dllmain thread_func
         // This function can be used for runtime hook toggling
         m_hooksEnabled = true;
@@ -26,27 +24,27 @@ namespace modmenu {
     void HookManager::setNoclipHook(bool enabled) {
         auto base = reinterpret_cast<uintptr_t>(GetModuleHandle(0));
         if (enabled) {
-            MH_EnableHook(reinterpret_cast<void*>(base + PlayerObject_checkCollision));
+            MH_EnableHook(reinterpret_cast<void*>(base + OFF_PlayerObject_checkCollision));
         } else {
-            MH_DisableHook(reinterpret_cast<void*>(base + PlayerObject_checkCollision));
+            MH_DisableHook(reinterpret_cast<void*>(base + OFF_PlayerObject_checkCollision));
         }
     }
 
     void HookManager::setHitboxHook(bool enabled) {
         auto base = reinterpret_cast<uintptr_t>(GetModuleHandle(0));
         if (enabled) {
-            MH_EnableHook(reinterpret_cast<void*>(base + PlayLayer_draw));
+            MH_EnableHook(reinterpret_cast<void*>(base + OFF_PlayLayer_draw));
         } else {
-            MH_DisableHook(reinterpret_cast<void*>(base + PlayLayer_draw));
+            MH_DisableHook(reinterpret_cast<void*>(base + OFF_PlayLayer_draw));
         }
     }
 
     void HookManager::setAutoClickerHook(bool enabled) {
         auto base = reinterpret_cast<uintptr_t>(GetModuleHandle(0));
         if (enabled) {
-            MH_EnableHook(reinterpret_cast<void*>(base + PlayLayer_update));
+            MH_EnableHook(reinterpret_cast<void*>(base + OFF_PlayLayer_update));
         } else {
-            MH_DisableHook(reinterpret_cast<void*>(base + PlayLayer_update));
+            MH_DisableHook(reinterpret_cast<void*>(base + OFF_PlayLayer_update));
         }
     }
 

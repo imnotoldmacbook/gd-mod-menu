@@ -116,14 +116,12 @@ namespace modmenu {
         m_pToggleMenu->setPosition({0, 0});
 
         ModManager* manager = ModManager::getInstance();
-        auto& settings = manager->getSettings();
 
         float startY = winSize.height - 140;
         float spacing = 50.0f;
 
         switch (tab) {
             case TAB_MAIN: {
-                // Main tab - quick toggles
                 addToggleItem(m_pToggleMenu, "Noclip", "noclip", startY);
                 addToggleItem(m_pToggleMenu, "Show Hitboxes", "showHitboxes", startY - spacing);
                 addToggleItem(m_pToggleMenu, "Auto Clicker", "autoClicker", startY - spacing * 2);
@@ -134,7 +132,6 @@ namespace modmenu {
             }
 
             case TAB_GAMEPLAY: {
-                // Gameplay tab
                 auto label = CCLabelBMFont::create("Gameplay Modifications", "bigFont.fnt");
                 label->setPosition({winSize.width / 2, startY + 30});
                 label->setScale(0.6f);
@@ -144,7 +141,6 @@ namespace modmenu {
                 addToggleItem(m_pToggleMenu, "Disable Death Effect", "noclip", startY - spacing);
                 addToggleItem(m_pToggleMenu, "Show Object Info", "showHitboxes", startY - spacing * 2);
 
-                // Add custom buttons
                 auto btnSprite = gd::ButtonSprite::create("Test Noclip", 120, true, "bigFont.fnt", "GJ_button_01.png", 30, 0.7f);
                 auto testBtn = gd::CCMenuItemSpriteExtra::create(btnSprite, this, menu_selector(ModMenuLayer::onTASbotSync));
                 testBtn->setPosition({winSize.width / 2, startY - spacing * 3});
@@ -153,31 +149,32 @@ namespace modmenu {
             }
 
             case TAB_TASBOT: {
-                // TASbot integration tab
                 auto label = CCLabelBMFont::create("TASbot Integration", "bigFont.fnt");
                 label->setPosition({winSize.width / 2, startY + 30});
                 label->setScale(0.6f);
                 addChild(label, 1);
 
                 // TASbot status
-                auto statusLabel = CCLabelBMFont::create(
-                    manager->isTASbotLoaded() ? "TASbot: <cg>Loaded</c>" : "TASbot: <cr>Not Loaded</c>",
-                    "chatFont.fnt"
-                );
+                char statusBuf[64];
+                if (manager->isTASbotLoaded()) {
+                    strcpy(statusBuf, "TASbot: <cg>Loaded</c>");
+                } else {
+                    strcpy(statusBuf, "TASbot: <cr>Not Loaded</c>");
+                }
+                auto statusLabel = CCLabelBMFont::create(statusBuf, "chatFont.fnt");
                 statusLabel->setPosition({winSize.width / 2, startY});
                 statusLabel->setScale(0.7f);
                 addChild(statusLabel, 1);
 
                 addToggleItem(m_pToggleMenu, "TASbot Compatible Mode", "tasbotCompatible", startY - spacing);
-                addSliderItem(m_pToggleMenu, "Sync Mode", "tasbotSyncMode", 0, 2, startY - spacing * 2);
+                addSliderItem(m_pToggleMenu, "Sync Mode", "tasbotSyncMode", 0.0f, 2.0f, startY - spacing * 2);
 
-                // TASbot action buttons
                 auto reloadBtn = gd::CCMenuItemSpriteExtra::create(
                     gd::ButtonSprite::create("Reload TASbot", 130, true, "bigFont.fnt", "GJ_button_01.png", 30, 0.7f),
                     this,
                     menu_selector(ModMenuLayer::onReloadMods)
                 );
-                reloadBtn->setPosition({winSize.width / 2 - 80, startY - spacing * 3.5});
+                reloadBtn->setPosition({winSize.width / 2 - 80, startY - spacing * 3.5f});
                 m_pToggleMenu->addChild(reloadBtn);
 
                 auto saveBtn = gd::CCMenuItemSpriteExtra::create(
@@ -185,7 +182,7 @@ namespace modmenu {
                     this,
                     menu_selector(ModMenuLayer::onSaveConfig)
                 );
-                saveBtn->setPosition({winSize.width / 2 + 80, startY - spacing * 3.5});
+                saveBtn->setPosition({winSize.width / 2 + 80, startY - spacing * 3.5f});
                 m_pToggleMenu->addChild(saveBtn);
 
                 auto loadBtn = gd::CCMenuItemSpriteExtra::create(
@@ -193,22 +190,17 @@ namespace modmenu {
                     this,
                     menu_selector(ModMenuLayer::onLoadConfig)
                 );
-                loadBtn->setPosition({winSize.width / 2, startY - spacing * 4.5});
+                loadBtn->setPosition({winSize.width / 2, startY - spacing * 4.5f});
                 m_pToggleMenu->addChild(loadBtn);
 
-                // Sync mode explanation
-                auto syncLabel = CCLabelBMFont::create(
-                    "Sync Mode: 0=None 1=Frame 2=Click",
-                    "chatFont.fnt"
-                );
-                syncLabel->setPosition({winSize.width / 2, startY - spacing * 5.5});
+                auto syncLabel = CCLabelBMFont::create("Sync Mode: 0=None 1=Frame 2=Click", "chatFont.fnt");
+                syncLabel->setPosition({winSize.width / 2, startY - spacing * 5.5f});
                 syncLabel->setScale(0.6f);
                 addChild(syncLabel, 1);
                 break;
             }
 
             case TAB_VISUAL: {
-                // Visual tab
                 auto label = CCLabelBMFont::create("Visual Settings", "bigFont.fnt");
                 label->setPosition({winSize.width / 2, startY + 30});
                 label->setScale(0.6f);
@@ -222,7 +214,6 @@ namespace modmenu {
             }
 
             case TAB_SETTINGS: {
-                // Settings tab
                 auto label = CCLabelBMFont::create("Mod Menu Settings", "bigFont.fnt");
                 label->setPosition({winSize.width / 2, startY + 30});
                 label->setScale(0.6f);
@@ -252,12 +243,8 @@ namespace modmenu {
                 resetBtn->setPosition({winSize.width / 2, startY - spacing});
                 m_pToggleMenu->addChild(resetBtn);
 
-                // Info
-                auto infoLabel = CCLabelBMFont::create(
-                    "Settings saved to modmenu_settings.json\nin Geometry Dash folder",
-                    "chatFont.fnt"
-                );
-                infoLabel->setPosition({winSize.width / 2, startY - spacing * 2.5});
+                auto infoLabel = CCLabelBMFont::create("Settings saved to modmenu_settings.json\nin Geometry Dash folder", "chatFont.fnt");
+                infoLabel->setPosition({winSize.width / 2, startY - spacing * 2.5f});
                 infoLabel->setScale(0.6f);
                 addChild(infoLabel, 1);
                 break;
@@ -305,7 +292,7 @@ namespace modmenu {
     }
 
     void ModMenuLayer::onTabButton(CCObject* sender) {
-        auto btn = static_cast<CCMenuItemSpriteExtra*>(sender);
+        auto btn = static_cast<gd::CCMenuItemSpriteExtra*>(sender);
         switchTab(btn->getTag());
     }
 
@@ -324,23 +311,22 @@ namespace modmenu {
 
         if (key) {
             float currentValue = ModManager::getInstance()->getSettingFloat(key);
-            float newValue = currentValue + delta * 0.5f; // Step by 0.5
+            float newValue = currentValue + delta * 0.5f;
 
-            // Clamp based on key
             if (strcmp(key, "autoClickerSpeed") == 0) {
-                newValue = std::max(1.0f, std::min(60.0f, newValue));
+                if (newValue < 1.0f) newValue = 1.0f;
+                if (newValue > 60.0f) newValue = 60.0f;
             } else if (strcmp(key, "tasbotSyncMode") == 0) {
-                newValue = std::max(0.0f, std::min(2.0f, newValue));
+                if (newValue < 0.0f) newValue = 0.0f;
+                if (newValue > 2.0f) newValue = 2.0f;
             }
 
             ModManager::getInstance()->setSetting(key, newValue);
 
             // Update the value label
-            auto winSize = CCDirector::sharedDirector()->getWinSize();
             char valueStr[32];
             sprintf(valueStr, "%.1f", newValue);
 
-            // Find and update the label
             CCArray* children = getChildren();
             CCObject* obj;
             CCARRAY_FOREACH(children, obj) {
@@ -365,15 +351,12 @@ namespace modmenu {
     }
 
     void ModMenuLayer::onReloadMods(CCObject* sender) {
-        // Reset settings to defaults
         ModManager* manager = ModManager::getInstance();
-        auto& settings = manager->getSettings();
-        settings = ModManager::Settings(); // Reset to defaults
+        ModManager::Settings defaults;
+        manager->getSettings() = defaults;
         manager->save();
         updateToggleStates();
         updateSliderStates();
-
-        // Recreate current tab
         createTabContent(m_currentTab);
     }
 
@@ -383,14 +366,9 @@ namespace modmenu {
             ModManager::getInstance()->saveTASbotConfig();
         }
 
-        // Show confirmation
-        FLAlertLayer::create(
-            nullptr,
-            "Saved",
-            "OK",
-            nullptr,
-            "Configuration saved successfully!"
-        )->show();
+        // Show confirmation using FLAlertLayer from gd namespace
+        auto alert = gd::FLAlertLayer::create(nullptr, "Saved", "OK", nullptr, "Configuration saved successfully!");
+        alert->show();
     }
 
     void ModMenuLayer::onLoadConfig(CCObject* sender) {
@@ -402,13 +380,8 @@ namespace modmenu {
         updateSliderStates();
         createTabContent(m_currentTab);
 
-        FLAlertLayer::create(
-            nullptr,
-            "Loaded",
-            "OK",
-            nullptr,
-            "Configuration loaded successfully!"
-        )->show();
+        auto alert = gd::FLAlertLayer::create(nullptr, "Loaded", "OK", nullptr, "Configuration loaded successfully!");
+        alert->show();
     }
 
     void ModMenuLayer::addToggleItem(CCMenu* menu, const char* label, const char* key, float yPos) {
@@ -438,7 +411,11 @@ namespace modmenu {
 
         menu->addChild(toggler);
 
-        m_toggleItems.push_back({toggler, key, label});
+        ToggleItem item;
+        item.toggler = toggler;
+        item.settingKey = key;
+        item.label = label;
+        m_toggleItems.push_back(item);
     }
 
     void ModMenuLayer::addSliderItem(CCMenu* menu, const char* label, const char* key, float min, float max, float yPos) {
@@ -459,7 +436,7 @@ namespace modmenu {
         auto valueLabel = CCLabelBMFont::create(valueStr, "goldFont.fnt");
         valueLabel->setPosition({winSize.width / 2 + 80, yPos + 25});
         valueLabel->setScale(0.5f);
-        valueLabel->setTag(1000 + reinterpret_cast<int>(key)); // Hack to find later
+        valueLabel->setTag(1000 + reinterpret_cast<int>(key));
         addChild(valueLabel, 1);
 
         // Minus button
@@ -469,7 +446,7 @@ namespace modmenu {
             menu_selector(ModMenuLayer::onSliderChanged)
         );
         minusBtn->setUserData(const_cast<char*>(key));
-        minusBtn->setTag(-1); // -1 for decrement
+        minusBtn->setTag(-1);
         minusBtn->setPosition({winSize.width / 2 - 20, yPos});
         minusBtn->setScale(0.7f);
         menu->addChild(minusBtn);
@@ -481,12 +458,17 @@ namespace modmenu {
             menu_selector(ModMenuLayer::onSliderChanged)
         );
         plusBtn->setUserData(const_cast<char*>(key));
-        plusBtn->setTag(1); // 1 for increment
+        plusBtn->setTag(1);
         plusBtn->setPosition({winSize.width / 2 + 60, yPos});
         plusBtn->setScale(0.7f);
         menu->addChild(plusBtn);
 
-        m_sliderItems.push_back({nullptr, key, label, min, max});
+        SliderItem item;
+        item.settingKey = key;
+        item.label = label;
+        item.minVal = min;
+        item.maxVal = max;
+        m_sliderItems.push_back(item);
     }
 
     void ModMenuLayer::updateToggleStates() {
@@ -499,7 +481,6 @@ namespace modmenu {
     }
 
     void ModMenuLayer::updateSliderStates() {
-        // Update slider value labels
         for (auto& item : m_sliderItems) {
             float value = ModManager::getInstance()->getSettingFloat(item.settingKey);
             char valueStr[32];

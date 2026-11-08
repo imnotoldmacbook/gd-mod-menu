@@ -19,7 +19,8 @@ namespace modmenu {
         TASbot_LoadClickConfig m_tasbotLoadClickConfig = nullptr;
         TASbot_SaveClickConfig m_tasbotSaveClickConfig = nullptr;
 
-        // Mod settings
+        public:
+        // Mod settings (public for external access)
         struct Settings {
             bool noclip = false;
             bool showHitboxes = false;
@@ -29,7 +30,10 @@ namespace modmenu {
             bool showFPS = true;
             bool tasbotCompatible = true;
             int tasbotSyncMode = 0; // 0 = none, 1 = frame, 2 = click
-        } m_settings;
+        };
+
+    private:
+        Settings m_settings;
 
         std::filesystem::path m_configPath;
 

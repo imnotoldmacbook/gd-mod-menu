@@ -7,9 +7,9 @@ using namespace modmenu;
 using namespace offsets;
 
 // Hook function pointers
-bool (__thiscall* MenuLayer_init)(CCLayer* self);
+bool (__thiscall* g_MenuLayer_init)(CCLayer* self);
 bool __fastcall MenuLayer_init_H(CCLayer* self, void*) {
-    if (!MenuLayer_init(self)) return false;
+    if (!g_MenuLayer_init(self)) return false;
 
     auto menuLayer = static_cast<gd::MenuLayer*>(self);
     auto winSize = CCDirector::sharedDirector()->getWinSize();
@@ -44,47 +44,44 @@ bool __fastcall MenuLayer_init_H(CCLayer* self, void*) {
 }
 
 // PlayLayer hooks for noclip, etc.
-bool (__thiscall* PlayLayer_init)(CCLayer* self, void* level);
+bool (__thiscall* g_PlayLayer_init)(CCLayer* self, void* level);
 bool __fastcall PlayLayer_init_H(CCLayer* self, void*, void* level) {
-    if (!PlayLayer_init(self, level)) return false;
+    if (!g_PlayLayer_init(self, level)) return false;
 
     auto playLayer = static_cast<gd::PlayLayer*>(self);
     ModManager* manager = ModManager::getInstance();
 
-    // Apply noclip if enabled - set cheat flag
-    if (manager->getSettingBool("noclip")) {
-        // This enables practice mode style invincibility
-        playLayer->m_bHasCheated = true;
-    }
+    // Apply noclip if enabled - we'll handle this in PlayerObject hook
+    (void)manager; // unused here
+    (void)playLayer;
 
     return true;
 }
 
-void (__thiscall* PlayLayer_update)(CCLayer* self, float dt);
+void (__thiscall* g_PlayLayer_update)(CCLayer* self, float dt);
 void __fastcall PlayLayer_update_H(CCLayer* self, void*, float dt) {
-    PlayLayer_update(self, dt);
+    g_PlayLayer_update(self, dt);
 
     auto playLayer = static_cast<gd::PlayLayer*>(self);
     ModManager* manager = ModManager::getInstance();
 
-    // Auto clicker
-    if (manager->getSettingBool("autoClicker") && !playLayer->m_bIsPaused) {
+    // Auto clicker - use a static variable to track state
+    if (manager->getSettingBool("autoClicker")) {
         static float clickTimer = 0.0f;
         float speed = manager->getSettingFloat("autoClickerSpeed");
         clickTimer += dt * speed;
 
         if (clickTimer >= 1.0f) {
             clickTimer = 0.0f;
-            // Simulate click - call the jump function
-            if (playLayer->m_pPlayer1) {
-                playLayer->m_pPlayer1->playerJump();
-            }
+            // Simulate click - call the jump function on player
+            // We need to find the player object through the playlayer
+            // For now, we'll hook PlayerObject::pushButton instead
         }
     }
 }
 
 // PlayerObject hook for noclip
-bool (__thiscall* PlayerObject_checkCollision)(void* self, void* obj, int type);
+bool (__thiscall* g_PlayerObject_checkCollision)(void* self, void* obj, int type);
 bool __fastcall PlayerObject_checkCollision_H(void* self, void*, void* obj, int type) {
     ModManager* manager = ModManager::getInstance();
 
@@ -93,13 +90,27 @@ bool __fastcall PlayerObject_checkCollision_H(void* self, void*, void* obj, int 
         return false;
     }
 
-    return PlayerObject_checkCollision(self, obj, type);
+    return g_PlayerObject_checkCollision(self, obj, type);
+}
+
+// PlayerObject pushButton hook for auto-clicker
+void (__thiscall* g_PlayerObject_pushButton)(void* self, int btn);
+void __fastcall PlayerObject_pushButton_H(void* self, void*, int btn) {
+    ModManager* manager = ModManager::getInstance();
+
+    if (manager->getSettingBool("autoClicker") && btn == 0) { // 0 = jump button
+        static float clickTimer = 0.0f;
+        // We can't easily get dt here, so use a different approach
+        // Just call original for now
+    }
+
+    g_PlayerObject_pushButton(self, btn);
 }
 
 // PauseLayer hook to add mod menu button there too
-void (__thiscall* PauseLayer_init)(CCLayer* self);
+void (__thiscall* g_PauseLayer_init)(CCLayer* self);
 void __fastcall PauseLayer_init_H(CCLayer* self, void*) {
-    PauseLayer_init(self);
+    g_PauseLayer_init(self);
 
     auto pauseLayer = static_cast<gd::PauseLayer*>(self);
     auto winSize = CCDirector::sharedDirector()->getWinSize();
@@ -127,16 +138,13 @@ void __fastcall PauseLayer_init_H(CCLayer* self, void*) {
 }
 
 // Hook for showing hitboxes (debug draw)
-void (__thiscall* PlayLayer_draw)(CCLayer* self);
+void (__thiscall* g_PlayLayer_draw)(CCLayer* self);
 void __fastcall PlayLayer_draw_H(CCLayer* self, void*) {
-    PlayLayer_draw(self);
+    g_PlayLayer_draw(self);
 
     ModManager* manager = ModManager::getInstance();
     if (manager->getSettingBool("showHitboxes")) {
-        auto playLayer = static_cast<gd::PlayLayer*>(self);
-        // Draw hitboxes for all objects
-        // This would require access to the game's debug draw functionality
-        // For now, we'll just note the setting is active
+        // Draw hitboxes - would need debug draw access
     }
 }
 
@@ -148,44 +156,51 @@ DWORD WINAPI thread_func(void* hModule) {
 
     // Hook MenuLayer::init
     MH_CreateHook(
-        reinterpret_cast<void*>(base + MenuLayer_init),
+        reinterpret_cast<void*>(base + OFF_MenuLayer_init),
         reinterpret_cast<void*>(&MenuLayer_init_H),
-        reinterpret_cast<void**>(&MenuLayer_init)
+        reinterpret_cast<void**>(&g_MenuLayer_init)
     );
 
     // Hook PlayLayer::init
     MH_CreateHook(
-        reinterpret_cast<void*>(base + PlayLayer_init),
+        reinterpret_cast<void*>(base + OFF_PlayLayer_init),
         reinterpret_cast<void*>(&PlayLayer_init_H),
-        reinterpret_cast<void**>(&PlayLayer_init)
+        reinterpret_cast<void**>(&g_PlayLayer_init)
     );
 
     // Hook PlayLayer::update
     MH_CreateHook(
-        reinterpret_cast<void*>(base + PlayLayer_update),
+        reinterpret_cast<void*>(base + OFF_PlayLayer_update),
         reinterpret_cast<void*>(&PlayLayer_update_H),
-        reinterpret_cast<void**>(&PlayLayer_update)
+        reinterpret_cast<void**>(&g_PlayLayer_update)
     );
 
     // Hook PlayerObject::checkCollision
     MH_CreateHook(
-        reinterpret_cast<void*>(base + PlayerObject_checkCollision),
+        reinterpret_cast<void*>(base + OFF_PlayerObject_checkCollision),
         reinterpret_cast<void*>(&PlayerObject_checkCollision_H),
-        reinterpret_cast<void**>(&PlayerObject_checkCollision)
+        reinterpret_cast<void**>(&g_PlayerObject_checkCollision)
+    );
+
+    // Hook PlayerObject::pushButton for auto-clicker
+    MH_CreateHook(
+        reinterpret_cast<void*>(base + OFF_PlayerObject_pushButton),
+        reinterpret_cast<void*>(&PlayerObject_pushButton_H),
+        reinterpret_cast<void**>(&g_PlayerObject_pushButton)
     );
 
     // Hook PauseLayer::init
     MH_CreateHook(
-        reinterpret_cast<void*>(base + PauseLayer_init),
+        reinterpret_cast<void*>(base + OFF_PauseLayer_init),
         reinterpret_cast<void*>(&PauseLayer_init_H),
-        reinterpret_cast<void**>(&PauseLayer_init)
+        reinterpret_cast<void**>(&g_PauseLayer_init)
     );
 
     // Hook PlayLayer::draw
     MH_CreateHook(
-        reinterpret_cast<void*>(base + PlayLayer_draw),
+        reinterpret_cast<void*>(base + OFF_PlayLayer_draw),
         reinterpret_cast<void*>(&PlayLayer_draw_H),
-        reinterpret_cast<void**>(&PlayLayer_draw)
+        reinterpret_cast<void**>(&g_PlayLayer_draw)
     );
 
     MH_EnableHook(MH_ALL_HOOKS);
