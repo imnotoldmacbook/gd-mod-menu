@@ -4,7 +4,7 @@ project(cocos-headers CXX)
 
 add_library(cocos2d INTERFACE)
 
-target_include_directories(cocos2d INTERFACE 
+target_include_directories(cocos2d INTERFACE
   cocos2dx
   cocos2dx/include
   cocos2dx/kazmath/include
@@ -14,7 +14,8 @@ target_include_directories(cocos2d INTERFACE
   extensions
 )
 
-target_link_libraries(cocos2d INTERFACE
-  ${CMAKE_CURRENT_LIST_DIR}/cocos2dx/libcocos2d.lib
-  ${CMAKE_CURRENT_LIST_DIR}/extensions/libExtensions.lib
-)
+# No lib linking needed - we hook into GD's already-loaded cocos2d.dll
+# target_link_libraries(cocos2d INTERFACE
+#   ${CMAKE_CURRENT_LIST_DIR}/cocos2dx/libcocos2d.lib
+#   ${CMAKE_CURRENT_LIST_DIR}/extensions/libExtensions.lib
+# )
